@@ -1,4 +1,5 @@
 // pages/api/chat.ts
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from 'openai';
 
@@ -7,36 +8,40 @@ const openai = new OpenAI({
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  try {
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    // Handle preflight requests
-    return res.status(204).end();
-  }
-
-  if (req.method !== 'POST') return res.status(405).end();
-
-  const { message } = req.body;
-
-  const stream = await openai.chat.completions.create({
-    model: 'gpt-4', // or 'gpt-3.5-turbo'
-    messages: [{ role: 'user', content: message }],
-    stream: true,
-  });
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-
-  for await (const chunk of stream) {
-    const content = chunk.choices?.[0]?.delta?.content;
-    if (content) {
-      res.write(content);
+    if (req.method === 'OPTIONS') {
+      return res.status(204).end();
     }
-  }
 
-  res.end();
+    if (req.method !== 'POST') return res.status(405).end();
+
+    const { message } = req.body;
+
+    const stream = await openai.chat.completions.create({
+      model: 'gpt-4', // or 'gpt-3.5-turbo'
+      messages: [{ role: 'user', content: message }],
+      stream: true,
+    });
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) {
+        res.write(content);
+      }
+    }
+
+    res.end();
+  } catch (error) {
+    console.error('Error processing request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 }
