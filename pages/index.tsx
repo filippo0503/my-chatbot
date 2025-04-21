@@ -33,7 +33,7 @@ export default function Home() {
 
   return (
     <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif' }}>
-      <h1>Markdown Chatbot</h1>
+      <h1>Chatbot</h1>
       <textarea
         rows={4}
         value={input}
@@ -53,12 +53,12 @@ export default function Home() {
           borderRadius: '4px',
         }}
       >
-        {loading ? 'Streaming...' : 'Send'}
+        {loading ? 'Loding...' : 'Send'}
       </button>
 
       {response && (
         <div style={{ marginTop: '20px' }}>
-          <h3>AI Response (Streaming Markdown):</h3>
+          <h3>AI Assistant:</h3>
           <ChatMessage content={response} />
         </div>
       )}
