@@ -6,7 +6,7 @@ export const config = {
 };
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY!,
+    apiKey: "sk-proj-Q2BcdzFObTt0AoFovGXdT3BlbkFJX02UAguQPxAmzIYutb2J",
 });
 
 export default async function handler(req: Request) {
