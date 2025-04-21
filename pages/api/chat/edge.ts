@@ -44,7 +44,7 @@ export default async function handler(req: Request) {
             },
         });
     } catch (error) {
-        console.log(error)
+        throw error;
     }
 
 }
