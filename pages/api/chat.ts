@@ -1,34 +1,47 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import OpenAI from 'openai';
+// pages/api/chat.ts
+
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { OpenAI } from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY ?? '',
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    // Validate that it's a POST request.
-    if (req.method !== 'POST') {
-      res.setHeader('Allow', ['POST']);
-      return res.status(405).json({ error: 'Method Not Allowed' });
+    // Set CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+      return res.status(204).end();
     }
 
-    // Extract the message content from the request body.
+    if (req.method !== 'POST') return res.status(405).end();
+
     const { message } = req.body;
-    if (!message || typeof message !== 'string') {
-      return res.status(400).json({ error: 'Bad Request: Missing or invalid "message" in payload' });
-    }
 
-    // Call OpenAI's chat model.
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+    const stream = await openai.chat.completions.create({
+      model: 'gpt-4', // or 'gpt-3.5-turbo'
       messages: [{ role: 'user', content: message }],
+      stream: true,
     });
 
-    // Return the chat response back to the client.
-    return res.status(200).json({ reply: response.choices[0].message.content });
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) {
+        res.write(content);
+      }
+    }
+
+    res.end();
   } catch (error) {
-    console.error('OpenAI API error:', error);
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error('Error processing request:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 }
