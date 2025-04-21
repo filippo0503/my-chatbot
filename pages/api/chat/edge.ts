@@ -6,7 +6,7 @@ export const config = {
 };
 
 const openai = new OpenAI({
-    apiKey: "sk-proj-Q2BcdzFObTt0AoFovGXdT3BlbkFJX02UAguQPxAmzIYutb2J",
+    apiKey: "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",
 });
 
 export default async function handler(req: Request) {
